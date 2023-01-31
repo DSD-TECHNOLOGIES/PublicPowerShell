@@ -1,3 +1,5 @@
+# Returns a list of apps found within  theShell.Application namespace and determines which are pinned to the Microsoft Windows taskbar
+
 Function Get-PinnedHEX{
     # Taskband Key
     $Taskband = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband"
