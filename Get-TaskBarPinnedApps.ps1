@@ -45,7 +45,7 @@ param($HEX)
         $TempObj | Add-Member -MemberType NoteProperty -Name AppName -Value $App.Name
         
         # If the formatted app name, check if the TempAppName is found in the HEXString and add result to temp object
-        $TempObj | Add-Member -MemberType NoteProperty -Name Pinned -Value ($HEXString -like "*$TempAppName*")
+        $TempObj | Add-Member -MemberType NoteProperty -Name Pinned -Value ($HEX -like "*$TempAppName*")
 
         # store current apps detail to an object of results
         $ResultsCollection += $TempObj
@@ -55,4 +55,5 @@ param($HEX)
     Return $ResultsCollection
 }
 
-Get-PinnedApps -HEX Get-PinnedHEX
+[string]$pinnedHEX = Get-PinnedHEX
+Get-PinnedApps -HEX $pinnedHEX
