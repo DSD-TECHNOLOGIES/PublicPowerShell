@@ -1,59 +1,46 @@
-# Returns a list of apps found within the Shell.Application namespace and determines which are pinned to the Microsoft Windows taskbar
-
-Function Get-PinnedHEX{
-    # Taskband Key
-    $Taskband = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband"
-    
-    # Taskband Binary to HEX
-    $TaskbandHEX = (Get-ItemProperty -Path $Taskband -Name FavoritesResolve).FavoritesResolve | Format-Hex
-
-    # empty HEXString
-    $HEXString = ""    
-
-    # format the relevant HEX outputs into a single string
-    foreach($Line in $TaskbandHEX)
-    {
-        $HEXString += $line.tostring().Replace($line.tostring().Substring(0,60),"")
-    }
-
-    Return $HEXString
-}
-
 Function Get-PinnedApps{
-param($HEX)
 
     # Results Obj
     $ResultsCollection = @()
 
-    # Get Apps using the COM object that also allows the unpin method
+    # set Found state is false by default
+    $found = $False
+
+    # Get Apps using the Shell.Application COM object 
     $Apps = (New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items()
     
     # For each App found
     Foreach($App in $Apps)
     {
-        # empty the TempAppName
-        [string]$TempAppName = ""
-
-        # Split the App's Path to a character array and for each item in that array 
-        # populate the TempAppName and also add a fullstop to match the Taskband format
-        $App.Path.ToCharArray() | foreach{$TempAppName = $TempAppName + $_ + "." }
-
         # Create a temporary object to populate results
         $TempObj = New-Object -TypeName PSCustomObject
 
         # Add the AppName name to the temp object
-        $TempObj | Add-Member -MemberType NoteProperty -Name AppName -Value $App.Name
+        $TempObj | Add-Member -MemberType NoteProperty -Name App -Value $App.Name
+       
+        # Check the verbs available to the current app
+        Foreach($verb in $app.Verbs())
+        {
+            # if the Unpin verb is found then the item is pinned
+            if($verb.Name -eq 'Unpin from tas&kbar')
+            {
+                # set Found to True
+                $found = $true
+            }
+        }
         
-        # If the formatted app name, check if the TempAppName is found in the HEXString and add result to temp object
-        $TempObj | Add-Member -MemberType NoteProperty -Name Pinned -Value ($HEX -like "*$TempAppName*")
+        # Add the Found result to the temp object
+        $TempObj | Add-Member -MemberType NoteProperty -Name Pinned -Value $found
 
-        # store current apps detail to an object of results
+        # store current app results to a collection of results
         $ResultsCollection += $TempObj
+
+         # Return back to not found
+        $found = $false
     }
 
-    # return details form all found apps
+    # return app collection results
     Return $ResultsCollection
 }
 
-[string]$pinnedHEX = Get-PinnedHEX
-Get-PinnedApps -HEX $pinnedHEX
+Get-PinnedApps
